@@ -7,7 +7,7 @@ import { mockUser, mockProjects, mockCertificates } from './mockData';
 // Ubah ke FALSE untuk menggunakan data dummy (Mode Preview) dengan LocalStorage Persistence.
 const USE_BACKEND = true;
 // INI BENAR (Jalan di Netlify)
-export const API_URL = "https://project-vinix-port-update.vercel.app/api/auth";
+export const API_URL = "https://project-vinix-port-update.vercel.app/api";
 
 // --- LOCAL STORAGE KEYS (Untuk Mode Mock) ---
 const KEYS = {
