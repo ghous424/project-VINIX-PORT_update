@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dependencies (JANGAN DI-UPLOAD)
+node_modules/
+backend/node_modules/
+
+# Production Build (JANGAN DI-UPLOAD)
+dist/
+build/
+
+# Environment Variables (RAHASIA/JANGAN DI-UPLOAD)
+.env
+.env.local
+.env.*
+
+# System Files
+.DS_Store
+Thumbs.db

@@ -244,38 +244,65 @@ app.post('/api/mentors/login', (req, res) => {
     });
 });
 
-// Portfolio Data
+// Portfolio Data (DENGAN PROTEKSI PEMBAYARAN)
 app.get('/api/portfolio/:userId', (req, res) => {
     const userId = req.params.userId;
-    
-    // Get projects
-    const projectsQuery = 'SELECT * FROM projects WHERE user_id = ?';
-    
-    // Get certificates
-    const certificatesQuery = 'SELECT * FROM certificates WHERE user_id = ?';
-    
-    db.query(projectsQuery, [userId], (err, projects) => {
-        if (err) {
-            return res.status(500).json({ message: 'Database error' });
+
+    // --- [BARU] CEK STATUS PEMBAYARAN DULU ---
+    const checkPaymentQuery = `
+        SELECT status, payment_status 
+        FROM review_requests 
+        WHERE mentee_id = ? AND payment_status = 'approved' 
+        LIMIT 1
+    `;
+
+    db.query(checkPaymentQuery, [userId], (err, paymentResults) => {
+        if (err) return res.status(500).json({ message: 'Database error checking payment' });
+
+        // Jika tidak ada data approved, blokir akses
+        if (paymentResults.length === 0) {
+            return res.status(403).json({ 
+                message: 'Akses Ditolak. User ini belum melakukan pembayaran atau belum diverifikasi.',
+                locked: true
+            });
         }
 
-        const parsedProjects = projects.map(project => {
-            try {
-                // Safely parse tags, defaulting to an empty array if null, empty, or invalid JSON
-                const tags = project.tags ? JSON.parse(project.tags) : [];
-                return { ...project, tags };
-            } catch (e) {
-                // If JSON.parse fails, return an empty array for tags
-                return { ...project, tags: [] };
-            }
-        });
+        // --- JIKA LOLOS, LANJUT AMBIL DATA (Logika Lama) ---
         
-        db.query(certificatesQuery, [userId], (err, certificates) => {
-            if (err) {
-                return res.status(500).json({ message: 'Database error' });
-            }
-            
-            res.json({ projects: parsedProjects, certificates });
+        // Ambil data User Profile sekalian (biar lengkap)
+        const userQuery = 'SELECT id, name, email, avatar_url, title, bio, role FROM users WHERE id = ?';
+        
+        db.query(userQuery, [userId], (err, userResult) => {
+             if (err) return res.status(500).json({ message: 'Database error fetching user' });
+             
+             // Get projects
+             const projectsQuery = 'SELECT * FROM projects WHERE user_id = ?';
+             
+             db.query(projectsQuery, [userId], (err, projects) => {
+                if (err) return res.status(500).json({ message: 'Database error fetching projects' });
+        
+                const parsedProjects = projects.map(project => {
+                    try {
+                        const tags = project.tags ? JSON.parse(project.tags) : [];
+                        return { ...project, tags };
+                    } catch (e) {
+                        return { ...project, tags: [] };
+                    }
+                });
+                
+                // Get certificates
+                const certificatesQuery = 'SELECT * FROM certificates WHERE user_id = ?';
+                db.query(certificatesQuery, [userId], (err, certificates) => {
+                    if (err) return res.status(500).json({ message: 'Database error fetching certificates' });
+                    
+                    // Kirim semua data lengkap
+                    res.json({ 
+                        user: userResult[0], // Tambahan info user
+                        projects: parsedProjects, 
+                        certificates 
+                    });
+                });
+            });
         });
     });
 });
@@ -800,6 +827,31 @@ app.get("/", (req, res) => {
         date: new Date()
     };
     res.json(status); 
+});
+
+// --- [BARU] ADMIN: APPROVE PEMBAYARAN USER ---
+app.put('/api/admin/approve-payment/:requestId', (req, res) => {
+    const requestId = req.params.requestId;
+    
+    // Update status menjadi 'approved'
+    const query = `
+        UPDATE review_requests 
+        SET payment_status = 'approved', status = 'completed' 
+        WHERE id = ?
+    `;
+
+    db.query(query, [requestId], (err, result) => {
+        if (err) {
+            console.error('Error approving payment:', err);
+            return res.status(500).json({ message: 'Database error' });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Request ID tidak ditemukan' });
+        }
+
+        res.json({ message: 'Berhasil! User sekarang bisa mengakses fitur Portofolio Lengkap.' });
+    });
 });
 // Export app untuk Vercel (PENTING)
 module.exports = app;
