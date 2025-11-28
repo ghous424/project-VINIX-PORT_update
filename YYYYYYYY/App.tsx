@@ -18,6 +18,7 @@ import MentorProtectedRoute from './components/MentorProtectedRoute';
 import UserProtectedRoute from './components/UserProtectedRoute';
 import UserPortfolioPage from './pages/UserPortfolioPage';
 import PortfolioGalleryPage from './pages/PortfolioGalleryPage';
+import PublicPortfolioPage from './pages/PublicPortfolioPage';
 
 const App: React.FC = () => {
   return (
@@ -45,6 +46,7 @@ const Main: React.FC = () => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/portfolios" element={<PortfolioGalleryPage />} />
           <Route path="/portfolio/user/:username" element={<UserPortfolioPage />} />
+          <Route path="/portfolio/:userId" element={<PublicPortfolioPage />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>
