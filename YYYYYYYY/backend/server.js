@@ -7,6 +7,8 @@ require('dotenv').config({ path: '../.env' });
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+app.use(cors());
+
 // Middleware
 app.use(cors({
     origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:5174", "file://"], // Tambahkan origin untuk form HTML
@@ -790,13 +792,17 @@ app.get('/api/approved-portfolios', (req, res) => {
     });
 });
 
-
+// Ini agar saat dibuka https://link-vercel-anda.app tidak muncul 404
+app.get("/", (req, res) => {
+    const status = {
+        status: "Success",
+        message: "Backend Vinixport Berjalan dengan Baik! 🚀",
+        date: new Date()
+    };
+    res.json(status); 
+});
 // Export app untuk Vercel (PENTING)
 module.exports = app;
-// Tambahkan route ini untuk cek server jalan
-app.get("/", (req, res) => {
-  res.send("Backend Vinixport Berjalan dengan Baik! 🚀");
-});
 // Jalankan server hanya jika file ini dijalankan langsung (bukan di-import Vercel)
 if (require.main === module) {
     app.listen(PORT, () => {
