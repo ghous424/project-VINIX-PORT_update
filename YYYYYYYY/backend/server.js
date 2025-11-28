@@ -790,7 +790,16 @@ app.get('/api/approved-portfolios', (req, res) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+
+// Export app untuk Vercel (PENTING)
+module.exports = app;
+// Tambahkan route ini untuk cek server jalan
+app.get("/", (req, res) => {
+  res.send("Backend Vinixport Berjalan dengan Baik! 🚀");
 });
+// Jalankan server hanya jika file ini dijalankan langsung (bukan di-import Vercel)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
