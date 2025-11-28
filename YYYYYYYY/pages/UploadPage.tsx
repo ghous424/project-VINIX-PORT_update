@@ -79,12 +79,42 @@ const UploadPage: React.FC = () => {
         }
     }, []);
 
+    // Fungsi baru: Convert + Compress Gambar
     const convertToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = error => reject(error);
+            
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    
+                    // Kita batasi lebar maksimal 800px (Cukup untuk web)
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    
+                    // Jika gambar kecil, jangan dibesarkan
+                    const finalScale = scaleSize < 1 ? scaleSize : 1;
+                    
+                    canvas.width = img.width * finalScale;
+                    canvas.height = img.height * finalScale;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Kompres kualitas jadi 70% (Format JPEG)
+                    // Hasilnya biasanya di bawah 100KB - 500KB
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(compressedBase64);
+                };
+                
+                img.onerror = (error) => reject(error);
+            };
+            
+            reader.onerror = (error) => reject(error);
         });
     };
 
