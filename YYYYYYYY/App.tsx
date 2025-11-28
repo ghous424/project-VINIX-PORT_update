@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -19,6 +18,10 @@ import UserProtectedRoute from './components/UserProtectedRoute';
 import UserPortfolioPage from './pages/UserPortfolioPage';
 import PortfolioGalleryPage from './pages/PortfolioGalleryPage';
 import PublicPortfolioPage from './pages/PublicPortfolioPage';
+
+// --- [INI TAMBAHAN BARU] ---
+import AdminDashboard from './pages/AdminDashboard'; 
+// ---------------------------
 
 const App: React.FC = () => {
   return (
@@ -41,14 +44,21 @@ const Main: React.FC = () => {
       {!isAuthPage && <Navbar />}
       <main className="flex-grow">
         <Routes>
+          {/* Route Umum */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/portfolios" element={<PortfolioGalleryPage />} />
+          
+          {/* Route Profil User */}
           <Route path="/portfolio/user/:username" element={<UserPortfolioPage />} />
           <Route path="/portfolio/:userId" element={<PublicPortfolioPage />} />
 
-          {/* Protected Routes */}
+          {/* --- [INI ROUTE BARU UNTUK ADMIN] --- */}
+          <Route path="/admin" element={<AdminDashboard />} />
+          {/* ------------------------------------ */}
+
+          {/* Protected Routes (Butuh Login) */}
           <Route element={<ProtectedRoute />}>
             <Route path="/assessment" element={
               <UserProtectedRoute>
@@ -82,6 +92,5 @@ const Main: React.FC = () => {
     </div>
   );
 }
-
 
 export default App;

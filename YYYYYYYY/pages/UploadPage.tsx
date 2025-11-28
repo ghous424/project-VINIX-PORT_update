@@ -27,9 +27,19 @@ const UploadPage: React.FC = () => {
     const { user } = useAuth();
     const { addProject, addCertificate } = usePortfolio();
 
+    // --- [UPDATE 1] Validasi saat klik tombol upload ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setFile(e.target.files[0]);
+            const selectedFile = e.target.files[0];
+
+            // Cek Ukuran File (Maksimal 2MB)
+            if (selectedFile.size > 2 * 1024 * 1024) {
+                alert("File terlalu besar! Maksimal 2MB agar upload berhasil.");
+                e.target.value = ''; // Reset input agar user bisa pilih ulang
+                return;
+            }
+
+            setFile(selectedFile);
         }
     };
 
@@ -50,12 +60,21 @@ const UploadPage: React.FC = () => {
         e.stopPropagation();
     };
 
+    // --- [UPDATE 2] Validasi saat Drag & Drop ---
     const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            setFile(e.dataTransfer.files[0]);
+            const droppedFile = e.dataTransfer.files[0];
+
+            // Cek Ukuran File (Maksimal 2MB)
+            if (droppedFile.size > 3 * 1024 * 1024) {
+                alert("File terlalu besar! Maksimal 3MB agar upload berhasil.");
+                return;
+            }
+
+            setFile(droppedFile);
             e.dataTransfer.clearData();
         }
     }, []);
@@ -200,7 +219,7 @@ const UploadPage: React.FC = () => {
                                             <p className="text-sm text-slate-300">
                                                 <span className="font-bold text-blue-400 hover:underline">Click to upload</span> or drag and drop
                                             </p>
-                                            <p className="text-xs text-slate-500 mt-2">SVG, PNG, JPG or GIF (MAX. 5MB)</p>
+                                            <p className="text-xs text-slate-500 mt-2">SVG, PNG, JPG or GIF (MAX. 2MB)</p>
                                         </div>
                                     )}
                                 </label>
