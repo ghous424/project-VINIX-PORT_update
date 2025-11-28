@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uji Login dan User Database</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        
+        .section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, select, button, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .response {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .response.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .response.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .user-row {
+            transition: background-color 0.2s ease;
+        }
+        
+        .user-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Uji Login dan Manajemen User</h1>
+            <p>Tes koneksi ke database dan fungsionalitas login</p>
+        </div>
+        
+        <div class="section">
+            <h3>🔍 Cek Status Server</h3>
+            <button onclick="checkServerStatus()">Cek Status Server</button>
+            <div id="status-response" class="response"></div>
+        </div>
+        
+        <div class="section">
+            <h3>👥 Lihat Semua User</h3>
+            <button onclick="getAllUsers()">Lihat Semua User</button>
+            <div id="users-response" class="response"></div>
+            <div id="users-table" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="section">
+            <h3>📝 Tambah User Demo</h3>
+            <div class="form-group">
+                <label>Nama Lengkap:</label>
+                <input type="text" id="demo-name" placeholder="Nama lengkap user">
+            </div>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="demo-email" placeholder="email@contoh.com">
+            </div>
+            <div class="form-group">
+                <label>Peran:</label>
+                <select id="demo-role">
+                    <option value="user">User (Mahasiswa)</option>
+                    <option value="mentor">Mentor</option>
+                </select>
+            </div>
+            <button onclick="createDemoUser()">Buat User Demo</button>
+            <div id="demo-response" class="response"></div>
+        </div>
+        
+        <div class="section">
+            <h3>🔑 Uji Login</h3>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="login-email" placeholder="email@contoh.com">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="login-password" placeholder="password">
+            </div>
+            <button onclick="testLogin()">Login</button>
+            <div id="login-response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        // Fungsi untuk menampilkan pesan
+        function showMessage(responseId, message, isError = false) {
+            const responseDiv = document.getElementById(responseId);
+            responseDiv.textContent = message;
+            responseDiv.className = `response ${isError ? 'error' : 'success'}`;
+            responseDiv.style.display = 'block';
+            
+            // Sembunyikan pesan setelah 10 detik
+            setTimeout(() => {
+                responseDiv.style.display = 'none';
+            }, 10000);
+        }
+        
+        // Cek status server
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/debug/status`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage('status-response', `Server aktif. Status: ${data.status}. Database: ${data.database}. User ID: ${data.userId || 'Tidak ada'}`, false);
+                } else {
+                    showMessage('status-response', `Error: ${data.message || 'Server tidak merespons'}`, true);
+                }
+            } catch (error) {
+                console.error('Error checking server status:', error);
+                showMessage('status-response', `Error koneksi ke server: ${error.message}`, true);
+            }
+        }
+        
+        // Ambil semua user
+        async function getAllUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/all-users`);
+                const users = await response.json();
+                
+                if (response.ok) {
+                    if (users.length === 0) {
+                        showMessage('users-response', 'Tidak ada user dalam database. Silakan buat user demo terlebih dahulu.', false);
+                        document.getElementById('users-table').innerHTML = '';
+                    } else {
+                        showMessage('users-response', `Ditemukan ${users.length} user dalam database`, false);
+                        displayUsersTable(users);
+                    }
+                } else {
+                    showMessage('users-response', `Error: ${users.message || 'Gagal mengambil data user'}`, true);
+                    document.getElementById('users-table').innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Error getting users:', error);
+                showMessage('users-response', `Error: ${error.message}`, true);
+                document.getElementById('users-table').innerHTML = '';
+            }
+        }
+        
+        // Tampilkan tabel user
+        function displayUsersTable(users) {
+            const tableContainer = document.getElementById('users-table');
+            
+            let tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th>Peran</th>
+                            <th>Dibuat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            users.forEach(user => {
+                tableHtml += `
+                    <tr class="user-row">
+                        <td>${user.id}</td>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>${user.role}</td>
+                        <td>${new Date(user.created_at).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            tableContainer.innerHTML = tableHtml;
+        }
+        
+        // Buat user demo
+        async function createDemoUser() {
+            const name = document.getElementById('demo-name').value;
+            const email = document.getElementById('demo-email').value;
+            const role = document.getElementById('demo-role').value;
+            
+            if (!name || !email) {
+                showMessage('demo-response', 'Nama dan email wajib diisi!', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/admin/create-demo-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        role: role,
+                        title: role === 'mentor' ? 'Career Mentor' : 'Portfolio Owner',
+                        bio: role === 'mentor' ? 'Senior industry mentor' : 'Portfolio enthusiast'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('demo-response', `User demo berhasil dibuat dengan ID: ${result.id}`, false);
+                    // Kosongkan form
+                    document.getElementById('demo-name').value = '';
+                    document.getElementById('demo-email').value = '';
+                } else {
+                    showMessage('demo-response', `Error: ${result.message || 'Gagal membuat user demo'}`, true);
+                }
+            } catch (error) {
+                console.error('Error creating demo user:', error);
+                showMessage('demo-response', `Error: ${error.message}`, true);
+            }
+        }
+        
+        // Uji login
+        async function testLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value || 'password123'; // Gunakan password default karena backend melewati validasi
+            
+            if (!email) {
+                showMessage('login-response', 'Email wajib diisi!', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('login-response', `Login berhasil! Selamat datang, ${result.user.name}`, false);
+                } else {
+                    showMessage('login-response', `Login gagal: ${result.message || 'Email atau password salah'}`, true);
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+                showMessage('login-response', `Error: ${error.message}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

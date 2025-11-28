@@ -1,0 +1,2 @@
+-- FILE INI SENGAJA DIKOSONGKAN UNTUK MENGHINDARI KONFLIK DATA SAMPEL.
+-- GUNAKAN file backend/sample_data.sql untuk mengisi database.
