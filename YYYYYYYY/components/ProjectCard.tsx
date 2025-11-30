@@ -1,10 +1,9 @@
 import React from 'react';
-// Pastikan interface Project di types.ts sudah mengakomodasi image_url
-// atau kita handle manual di sini dengan 'any' sementara agar tidak merah
 import { Project } from '../types';
 
 interface ProjectCardProps {
-  project: Project | any; // Pakai any dulu biar aman menangkap properti dari DB
+  // Menggunakan 'any' sementara agar tidak error jika tipe data database sedikit berbeda
+  project: Project | any;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -14,39 +13,43 @@ const DeleteIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit, onDelete }) => {
   
-  // Fungsi Helper Super Aman untuk Tags
-  const getTagsArray = (tags: any): string[] => {
-    if (!tags) return []; // Jika null/undefined, kembalikan array kosong
-    if (Array.isArray(tags)) return tags; // Jika sudah array, kembalikan
+  // --- FUNGSI PENYELAMAT (Safe Parsing Tags) ---
+  const getSafeTags = (tags: any): string[] => {
+    // 1. Jika kosong/null/undefined, kembalikan array kosong (JANGAN DI-SPLIT)
+    if (!tags) return []; 
     
+    // 2. Jika sudah berupa Array, langsung pakai
+    if (Array.isArray(tags)) return tags; 
+    
+    // 3. Jika berupa String, coba parsing
     if (typeof tags === 'string') {
       try {
-        // Coba parsing JSON (contoh: '["react", "css"]')
+        // Coba parse JSON (misal: '["react", "css"]')
         const parsed = JSON.parse(tags);
         if (Array.isArray(parsed)) return parsed;
       } catch (e) {
-        // Jika bukan JSON, anggap CSV (contoh: "react, css")
+        // Jika bukan JSON, anggap pemisah koma (misal: "react, css")
         return tags.split(',').map(tag => tag.trim()).filter(Boolean);
       }
-      // Fallback string biasa
+      // Fallback split biasa
       return tags.split(',').map(tag => tag.trim()).filter(Boolean);
     }
-    return [];
+    
+    return []; // Jika tipe data aneh, return kosong
   };
 
-  const tagsArray = getTagsArray(project.tags);
-
-  // Handle Mismatch: Database TiDB kirim 'image_url', tapi Frontend mungkin minta 'imageUrl'
-  // Kita ambil mana saja yang ada isinya.
+  const tagsArray = getSafeTags(project.tags);
+  
+  // Handle gambar: Prioritaskan image_url (dari DB TiDB) atau imageUrl (frontend legacy)
   const displayImage = project.image_url || project.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 ease-in-out group relative h-full flex flex-col">
       <div className="absolute top-2 right-2 flex space-x-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="p-2 bg-white dark:bg-gray-700 rounded-full text-blue-600 hover:text-blue-800 shadow-md transition-colors" aria-label="Edit Project">
+          <button onClick={onEdit} className="p-2 bg-white dark:bg-gray-700 rounded-full text-blue-600 hover:text-blue-800 shadow-md transition-colors">
               <EditIcon />
           </button>
-          <button onClick={onDelete} className="p-2 bg-white dark:bg-gray-700 rounded-full text-red-600 hover:text-red-800 shadow-md transition-colors" aria-label="Delete Project">
+          <button onClick={onDelete} className="p-2 bg-white dark:bg-gray-700 rounded-full text-red-600 hover:text-red-800 shadow-md transition-colors">
               <DeleteIcon />
           </button>
       </div>
@@ -57,7 +60,6 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onEdit, onDelete }) 
             src={displayImage} 
             alt={project.title} 
             onError={(e) => {
-                // Fallback jika gambar gagal load
                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300?text=Image+Error';
             }}
         />

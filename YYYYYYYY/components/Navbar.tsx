@@ -41,6 +41,11 @@ const Navbar: React.FC = () => {
         : 'text-slate-400 hover:text-white hover:bg-white/5'
     }`;
 
+  // Helper aman untuk menampilkan nama depan
+  const getFirstName = (fullName: string | undefined) => {
+      return (fullName || '').split(' ')[0];
+  };
+
   return (
     <nav 
       className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${
@@ -69,8 +74,15 @@ const Navbar: React.FC = () => {
               <div className="flex items-center gap-4 pl-4 border-l border-slate-800">
                 <div className="text-right hidden lg:block">
                     <p className="text-xs text-slate-400">Signed in as {isMentor ? 'Mentor' : 'User'}</p>
-                    <p className="text-sm font-bold text-white">{user?.name.split(' ')[0]}</p>
+                    {/* [FIX] Gunakan helper aman agar tidak crash */}
+                    <p className="text-sm font-bold text-white">{getFirstName(user?.name)}</p>
                 </div>
+                
+                {/* [BARU] Tombol Admin (Opsional, biar gampang akses) */}
+                <Link to="/admin" className="text-slate-400 hover:text-white" title="Admin Panel">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </Link>
+
                 <button 
                     onClick={handleLogout} 
                     className="text-slate-300 hover:text-white hover:bg-red-500/10 hover:border-red-500/50 border border-transparent px-4 py-2 rounded-full text-sm font-medium transition-all duration-300"
@@ -157,6 +169,11 @@ const Navbar: React.FC = () => {
 
                 {isAuthenticated && isMentor && (
                     <li><NavLink to="/mentor" onClick={() => setIsOpen(false)} className={navLinkClass}>Mentor Dashboard</NavLink></li>
+                )}
+
+                {/* [BARU] Admin Menu di Mobile */}
+                {isAuthenticated && (
+                    <li><NavLink to="/admin" onClick={() => setIsOpen(false)} className={navLinkClass}>Admin Panel</NavLink></li>
                 )}
 
                 <li className="border-t border-slate-800 my-2 pt-4">

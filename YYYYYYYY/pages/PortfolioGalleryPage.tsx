@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { API_URL } from '../services/api'; // [FIX] Import API_URL
 import { User, Project } from '../types';
 
 interface PortfolioUser extends User {
@@ -17,11 +19,9 @@ const PortfolioGalleryPage: React.FC = () => {
   useEffect(() => {
     const fetchApprovedPortfolios = async () => {
       try {
-        const response = await fetch('http://localhost:5001/api/approved-portfolios');
-        if (!response.ok) throw new Error('Failed to fetch portfolios');
-        
-        const data = await response.json();
-        setPortfolios(data);
+        // [FIX] Gunakan API_URL (ke Vercel) dan axios
+        const response = await axios.get(`${API_URL}/api/approved-portfolios`);
+        setPortfolios(response.data);
       } catch (err) {
         console.error('Error fetching portfolios:', err);
         setError('Failed to load portfolios');
@@ -95,10 +95,11 @@ const PortfolioGalleryPage: React.FC = () => {
             {portfolios.map((portfolio) => (
               <Link
                 key={portfolio.id}
-                to={`/portfolio/user/${portfolio.email.split('@')[0]}`}
+                // [FIX] Gunakan ID user untuk link (lebih stabil daripada username/email)
+                to={`/portfolio/${portfolio.id}`} 
                 className="group"
               >
-                <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1">
+                <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden hover:border-blue-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 hover:-translate-y-1 h-full flex flex-col">
                   {/* Image Section */}
                   <div className="relative h-48 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
                     {portfolio.latestProject?.imageUrl ? (
@@ -130,7 +131,7 @@ const PortfolioGalleryPage: React.FC = () => {
                   </div>
 
                   {/* Content Section */}
-                  <div className="p-6">
+                  <div className="p-6 flex flex-col flex-grow">
                     {/* Avatar and Name */}
                     <div className="flex items-center gap-4 mb-4">
                       <div className="relative">
@@ -151,13 +152,13 @@ const PortfolioGalleryPage: React.FC = () => {
 
                     {/* Bio */}
                     {portfolio.bio && (
-                      <p className="text-sm text-slate-400 line-clamp-2 mb-4">
+                      <p className="text-sm text-slate-400 line-clamp-2 mb-4 flex-grow">
                         {portfolio.bio}
                       </p>
                     )}
 
                     {/* Stats */}
-                    <div className="flex items-center gap-4 pt-4 border-t border-slate-800">
+                    <div className="flex items-center gap-4 pt-4 border-t border-slate-800 mt-auto">
                       <div className="flex items-center gap-2 text-slate-400">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -166,7 +167,7 @@ const PortfolioGalleryPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 text-slate-400">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                         </svg>
                         <span className="text-sm">{portfolio.certificateCount} Certificate</span>
                       </div>

@@ -49,8 +49,8 @@ const PortfolioPage: React.FC = () => {
     
     useEffect(() => {
         if (user) {
-            setEditedBio(user.bio);
-            setEditedTitle(user.title);
+            setEditedBio(user.bio || '');
+            setEditedTitle(user.title || '');
         }
     }, [user]);
 
@@ -159,28 +159,32 @@ const PortfolioPage: React.FC = () => {
         });
 
         try {
-            const avatarBase64 = await toBase64(user.avatarUrl) as string;
-            const imageFormat = avatarBase64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-            doc.addImage(avatarBase64, imageFormat, 20, 20, 30, 30);
+            if (user.avatarUrl) {
+                const avatarBase64 = await toBase64(user.avatarUrl) as string;
+                if (avatarBase64) {
+                    const imageFormat = avatarBase64.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+                    doc.addImage(avatarBase64, imageFormat, 20, 20, 30, 30);
+                }
+            }
         } catch (error) {
             console.error("Could not add avatar to PDF:", error);
         }
         
         doc.setFontSize(28);
         doc.setFont('helvetica', 'bold');
-        doc.text(user.name, 60, 30);
+        doc.text(user.name || 'User', 60, 30);
         
         doc.setFontSize(16);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(80, 80, 80);
-        doc.text(user.title, 60, 40);
+        doc.text(user.title || '', 60, 40);
         doc.setDrawColor(200);
         doc.line(20, 55, 190, 55);
 
-        // Bio
+        // Bio [FIXED: Handle null/undefined bio]
         doc.setFontSize(12);
         doc.setTextColor(40, 40, 40);
-        const bioText = doc.splitTextToSize(user.bio, 170);
+        const bioText = doc.splitTextToSize(user.bio || '', 170); // AMAN
         doc.text(bioText, 20, 65);
         
         const bioDimensions = doc.getTextDimensions(bioText);
@@ -214,7 +218,7 @@ const PortfolioPage: React.FC = () => {
             });
         }
         
-        doc.save(`${user.name.replace(/\s/g, '_')}_Portfolio.pdf`);
+        doc.save(`${(user.name || 'user').replace(/\s/g, '_')}_Portfolio.pdf`);
     };
 
     const handleSaveBio = () => {
@@ -275,6 +279,11 @@ const PortfolioPage: React.FC = () => {
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+            // Tambahan Validasi
+            if (file.size > 2 * 1024 * 1024) {
+                alert("File terlalu besar! Maksimal 2MB.");
+                return;
+            }
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64String = reader.result as string;
@@ -288,7 +297,7 @@ const PortfolioPage: React.FC = () => {
         avatarInputRef.current?.click();
     };
 
-    const shareUrl = user ? `${window.location.origin}/u/${user.name.replace(/\s+/g, '').toLowerCase()}` : '';
+    const shareUrl = user ? `${window.location.origin}/u/${(user.name || 'user').replace(/\s+/g, '').toLowerCase()}` : '';
     const shareText = `Check out my professional portfolio on VinixPort!`;
     const latestReviewRequest = myReviewRequests[0];
 
@@ -361,7 +370,7 @@ const PortfolioPage: React.FC = () => {
                                     <div>
                                         <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-1">{user.name}</h1>
                                         {isEditingTitle ? (
-                                             <div className="flex items-center gap-2 mt-2">
+                                           <div className="flex items-center gap-2 mt-2">
                                                 <input
                                                     type="text"
                                                     value={editedTitle}
@@ -371,10 +380,10 @@ const PortfolioPage: React.FC = () => {
                                                 />
                                                 <button onClick={handleSaveTitle} className="text-sm bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold transition">Save</button>
                                                 <button onClick={() => setIsEditingTitle(false)} className="text-sm text-slate-400 hover:text-white transition">Cancel</button>
-                                             </div>
+                                           </div>
                                         ) : (
                                             <div className="flex items-center gap-2 group/title cursor-pointer mt-1" onClick={() => setIsEditingTitle(true)}>
-                                                <p className="text-lg text-blue-400 font-medium">{user.title}</p>
+                                                <p className="text-lg text-blue-400 font-medium">{user.title || "Add Title"}</p>
                                                 <EditIcon className="w-4 h-4 text-slate-600 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                                             </div>
                                         )}
